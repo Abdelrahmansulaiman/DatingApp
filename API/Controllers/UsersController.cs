@@ -6,6 +6,7 @@ using API.Data;
 using Microsoft.AspNetCore.Mvc;
 using API.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Cors;
 
 namespace API.Controllers
 {
@@ -18,7 +19,7 @@ namespace API.Controllers
         {
             _context = context;
         }
-
+        
         [HttpGet]
         public async Task < ActionResult<IEnumerable<AppUser>>> GetUsers()
         {
@@ -26,6 +27,7 @@ namespace API.Controllers
              
         }
 
+        
         [HttpGet("{id}")]
         public async Task<ActionResult<AppUser>> GetUser(int id)
         {
