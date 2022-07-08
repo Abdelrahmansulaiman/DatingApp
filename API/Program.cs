@@ -1,6 +1,13 @@
+using System.Text;
 using API.Data;
+using API.Extensions;
+using API.Interfaces;
+using API.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
-var  MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
+using Microsoft.IdentityModel.Tokens;
+
+var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -9,21 +16,20 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddDbContext<DataContext>(options =>
-    {
-        options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"));
-    });
+builder.Services.AddScoped<ITokenService,TokenService>();
+
+builder.Services.AddApplicationServices(builder.Configuration);
 builder.Services.AddControllers();
 builder.Services.AddCors();
+builder.Services.AddIdentityServices(builder.Configuration);
 builder.Services.AddCors(options =>
 {
-    
     options.AddPolicy(name: MyAllowSpecificOrigins,
-                      policy  =>
+                      policy =>
                       {
                           policy.WithOrigins("https://localhost:4200")
-                                              .AllowAnyHeader()
-                                                  .AllowAnyMethod();
+                                .AllowAnyHeader()
+                                .AllowAnyMethod();
                       });
 });
 
@@ -39,6 +45,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseCors(MyAllowSpecificOrigins);
+app.UseAuthentication();
 
 app.UseAuthorization();
 

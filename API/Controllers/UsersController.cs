@@ -1,33 +1,31 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using API.Data;
-using Microsoft.AspNetCore.Mvc;
 using API.Entities;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Cors;
 
 namespace API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class UsersController : ControllerBase
+    
+    public class UsersController : BaseApiController
     {
-        private readonly DataContext _context ;
-        public UsersController(DataContext context)
+        private readonly DataContext _context;
+       public UsersController(DataContext context)
         {
             _context = context;
         }
-        
+
         [HttpGet]
-        public async Task < ActionResult<IEnumerable<AppUser>>> GetUsers()
+        [AllowAnonymous]
+        public async Task<ActionResult<IEnumerable<AppUser>>> GetUsers()
         {
             return await _context.User.ToListAsync();
-             
         }
 
-        
+        [Authorize]
         [HttpGet("{id}")]
         public async Task<ActionResult<AppUser>> GetUser(int id)
         {
