@@ -1,50 +1,35 @@
-using System.Text;
 using API.Data;
-using API.Extensions;
-using API.Interfaces;
-using API.Middleware;
-using API.Services;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 
-var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
-var builder = WebApplication.CreateBuilder(args);
-
-builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-builder.Services.AddApplicationServices(builder.Configuration);
-// builder.Services.AddCors();
-builder.Services.AddIdentityServices(builder.Configuration);
-builder.Services.AddCors(options =>
+namespace API
 {
-    options.AddPolicy(name: MyAllowSpecificOrigins,
-                      policy =>
-                      {
-                          policy.WithOrigins("https://localhost:4200")
-                                .AllowAnyHeader()
-                                .AllowAnyMethod();
-                      });
-});
+    public class Program
+    {
+        public static async Task Main(string[] args)
+        {
+            var host = CreateHostBuilder(args).Build();
+            using var scope = host.Services.CreateScope();
+            var services = scope.ServiceProvider;
+            try
+            {
+                var context=services.GetRequiredService<DataContext>();
+                await context.Database.MigrateAsync();
+                await Seed.SeedUsers(context);
+            }
+            catch (Exception ex)
+            {                
+                var logger=services.GetRequiredService<ILogger<Program>>();
+                logger.LogError(ex,"An Error occured During Migration");
+                
+            }
+            await host.RunAsync();
+        }
 
-var app = builder.Build();
-
-// Configure the HTTP request pipeline.
-
-// if (app.Environment.IsDevelopment())
-// {
-//     app.UseSwagger();
-//     app.UseSwaggerUI();
-// }
-app.UseMiddleware<ExceptionMiddleware>();
-app.UseHttpsRedirection();
-
-app.UseCors(MyAllowSpecificOrigins);
-app.UseAuthentication();
-
-app.UseAuthorization();
-
-app.MapControllers();
-
-app.Run();
+        private static IHostBuilder CreateHostBuilder(string[] args) =>
+        Host.CreateDefaultBuilder(args)
+        .ConfigureWebHostDefaults(webBuilder =>
+        {
+            webBuilder.UseStartup<Startup>();
+        });
+    }
+}
